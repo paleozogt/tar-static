@@ -7,6 +7,7 @@
 
 tar_version="1.29"
 musl_version="1.1.15"
+triplet=${1:-$(gcc -dumpmachine)}
 
 platform=$(uname -s)
 
@@ -38,8 +39,9 @@ if [ "$platform" = "Linux" ]; then
   install_dir=${working_dir}/musl-install
 
   pushd musl-${musl_version}
-  env CFLAGS="$CFLAGS -Os -ffunction-sections -fdata-sections" LDFLAGS='-Wl,--gc-sections' ./configure --prefix=${install_dir}
-  make install
+  env CFLAGS="$CFLAGS -Os -ffunction-sections -fdata-sections" LDFLAGS='-Wl,--gc-sections' \
+    ./configure --prefix=${install_dir} --host=$triplet
+  make -j4 install
   popd # musl-${musl-version}
 
   echo "= setting CC to musl-gcc"
@@ -53,8 +55,9 @@ fi
 echo "= building tar"
 
 pushd tar-${tar_version}
-env FORCE_UNSAFE_CONFIGURE=1 CFLAGS="$CFLAGS -Os -ffunction-sections -fdata-sections" LDFLAGS='-Wl,--gc-sections' ./configure
-make
+env FORCE_UNSAFE_CONFIGURE=1 CFLAGS="$CFLAGS -Os -ffunction-sections -fdata-sections" LDFLAGS='-Wl,--gc-sections' \
+  ./configure --host=$triplet
+make -j4
 popd # tar-${tar_version}
 
 popd # build
